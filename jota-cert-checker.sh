@@ -20,7 +20,7 @@ current_date=$(date +%s)
 end_date=""
 days_left=""
 certificate_last_day=""
-warning_days="30"
+warning_days="33"
 alert_days="15"
 # Terminal colors
 ok_color="\e[38;5;40m"
@@ -37,7 +37,7 @@ html_mode(){
 	# Generate and reset file
 	cat <<- EOF > $html_file
 	<!DOCTYPE html>
-	<html>
+	<html lang="zh">
 			<head>
 			<title>SSL Certs expiration</title>
 			</head>
@@ -54,8 +54,13 @@ html_mode(){
 
 	while read site;do
 		sitename=$(echo $site | cut -d ":" -f1)
-		certificate_last_day=$(echo | openssl s_client -servername ${site} -connect ${site} 2>/dev/null | \
-		openssl x509 -noout -enddate 2>/dev/null | cut -d "=" -f2)
+		#certificate_last_day=$(echo | openssl s_client -servername ${site} -connect ${site} 2>/dev/null | \
+		#openssl x509 -noout -enddate 2>/dev/null | cut -d "=" -f2)
+certificate_last_day=`openssl s_client -host ${sitename} -port 443 -showcerts </dev/null 2>/dev/null |
+          sed -n '/BEGIN CERTIFICATE/,/END CERT/p' |
+          openssl x509 -text 2>/dev/null |
+          sed -n 's/ *Not After : *//p'`
+
 		end_date=$(date +%s -d "$certificate_last_day")
 		days_left=$(((end_date - current_date) / 86400))
 
@@ -107,8 +112,13 @@ terminal_mode(){
 
 	while read site;do
 		sitename=$(echo $site | cut -d ":" -f1)
-		certificate_last_day=$(echo | openssl s_client -servername ${site} -connect ${site} 2>/dev/null | \
-		openssl x509 -noout -enddate 2>/dev/null | cut -d "=" -f2)
+#		certificate_last_day=$(echo | openssl s_client -servername ${site} -connect ${site} 2>/dev/null | \
+#		openssl x509 -noout -enddate 2>/dev/null | cut -d "=" -f2)
+certificate_last_day=`openssl s_client -host ${sitename} -port 443 -showcerts </dev/null 2>/dev/null |
+          sed -n '/BEGIN CERTIFICATE/,/END CERT/p' |
+          openssl x509 -text 2>/dev/null |
+          sed -n 's/ *Not After : *//p'`
+
 		end_date=$(date +%s -d "$certificate_last_day")
 		days_left=$(((end_date - current_date) / 86400))
 
